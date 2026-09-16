@@ -1,0 +1,104 @@
+name: Publish to PyPI
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump"
+        required: true
+        type: choice
+        options:
+          - hotfix
+          - patch
+          - feat
+          - major
+      commit_message:
+        description: "Commit message (conventional commit)"
+        required: true
+        type: string
+        default: "chore: release"
+
+jobs:
+  bump-and-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Set Python
+        run: uv python install
+
+      - name: Calculate new version
+        id: version
+        shell: pwsh
+        run: |
+          $bump = "${{ github.event.inputs.bump }}"
+
+          # For hotfix: just use current version as-is, no increment
+          if ($bump -eq "hotfix") {
+            $content = Get-Content src/pustaka/__init__.py -Raw
+            if ($content -match '__version__ = "([^"]+)"') { $v = $matches[1] } else { $v = "0.1.0" }
+            echo "new_version=$v" >> $env:GITHUB_OUTPUT
+            Write-Host "Hotfix — keeping version: $v"
+            exit 0
+          }
+
+          # For patch/feat/major: calculate from current version
+          $content = Get-Content src/pustaka/__init__.py -Raw
+          $current = if ($content -match '__version__ = "([^"]+)"') { $matches[1] } else { "0.1.0" }
+          Write-Host "Current: $current"
+
+          # Strip pre-release tag (b1, a1, etc.) for stable bumps
+          $base = $current -replace '[ab]\d+$', ''
+          if ($base -match '^(\d+)\.(\d+)\.(\d+)$') {
+            $major = [int]$matches[1]; $minor = [int]$matches[2]; $patch = [int]$matches[3]
+          } else {
+            $major = 0; $minor = 1; $patch = 0
+          }
+
+          switch ($bump) {
+            "patch" { $patch++ }
+            "feat"  { $minor++; $patch = 0 }
+            "major" { $major++; $minor = 0; $patch = 0 }
+          }
+
+          $newVersion = "$major.$minor.$patch"
+          Write-Host "New: $newVersion"
+          echo "new_version=$newVersion" >> $env:GITHUB_OUTPUT
+
+      - name: Bump version files (patch/feat/major only)
+        if: github.event.inputs.bump != 'hotfix'
+        shell: pwsh
+        run: |
+          $v = "${{ steps.version.outputs.new_version }}"
+          (Get-Content src/pustaka/__init__.py) -replace '__version__ = ".*"', "__version__ = `"$v`"" | Set-Content src/pustaka/__init__.py
+          (Get-Content pyproject.toml) -replace '^version = ".*"', "version = `"$v`"" | Set-Content pyproject.toml
+
+      - name: Commit & tag (patch/feat/major only)
+        if: github.event.inputs.bump != 'hotfix'
+        shell: pwsh
+        run: |
+          $v = "${{ steps.version.outputs.new_version }}"
+          $msg = "${{ github.event.inputs.commit_message }}"
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add src/pustaka/__init__.py pyproject.toml
+          git commit -m "$msg
+
+          Bump version to $v"
+          git tag "v$v"
+          git push origin HEAD --tags
+
+      - name: Build
+        run: uv build
+
+      - name: Publish to PyPI
+        run: uv publish
