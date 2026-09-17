@@ -24,9 +24,9 @@ from .pdf_analyzer import PDFMINER_AVAILABLE, analyze_full
 
 log = logging.getLogger(__name__)
 
-SCRIPT_DIR = Path(__file__).resolve().parent.parent.parent
-REPO_CONFIG = SCRIPT_DIR / "repositories.json"
-CACHE_DIR = SCRIPT_DIR / ".cache_skripsi"
+_PACKAGE_DIR = Path(__file__).resolve().parent
+REPO_CONFIG = _PACKAGE_DIR / "repositories.json"
+CACHE_DIR = _PACKAGE_DIR / ".cache_skripsi"
 CACHE_DIR.mkdir(exist_ok=True)
 
 

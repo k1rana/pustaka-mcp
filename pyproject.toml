@@ -7,7 +7,7 @@ license = { text = "AGPL-3.0-only" }
 requires-python = ">=3.10"
 authors = [
     { name = "Yingtze", email = "yingtze@users.noreply.github.com" },
-    { name = "contributor" },
+    { name = "k1rana". email = "nyannss@proton.me"}
 ]
 dependencies = [
     "mcp>=2.0.0,<3",
@@ -21,8 +21,8 @@ pdf = ["pdfminer.six>=20221105"]
 all = ["pustaka-mcp[pdf]"]
 
 [project.urls]
-Homepage = "https://github.com/yingtze/pencari-skripsi-indonesia"
-Source = "https://github.com/yingtze/pencari-skripsi-indonesia"
+Homepage = "https://github.com/k1rana/pustaka-mcp"
+Source = "https://github.com/k1rana/pustaka-mcp"
 
 [project.scripts]
 pustaka = "pustaka.server:main"
@@ -36,3 +36,6 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/pustaka"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"src/pustaka/repositories.json" = "pustaka/repositories.json"
