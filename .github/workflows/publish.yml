@@ -42,33 +42,42 @@ jobs:
         run: |
           $bump = "${{ github.event.inputs.bump }}"
 
-          # Read current version
-          $content = Get-Content src/pustaka/__init__.py -Raw
-          if ($content -match '__version__ = "([^"]+)"') { $current = $matches[1] } else { $current = "0.1.0" }
-          Write-Host "Current: $current"
+          if ($bump -eq "beta") {
+            # Query PyPI for latest published version
+            $latest = $null
+            try {
+              $pypi = Invoke-RestMethod -Uri "https://pypi.org/pypi/pustaka-mcp/json" -ErrorAction Stop
+              $versions = $pypi.releases.PSObject.Properties.Name
+              $latest = $versions | Where-Object { $_ -match '^\d+\.\d+\.\d+(b\d+)?$' } | Sort-Object -Descending | Select-Object -First 1
+            } catch {}
 
-          # Parse base version and beta suffix
-          if ($current -match '^(\d+)\.(\d+)\.(\d+)(b\d+)?$') {
-            $major = [int]$matches[1]; $minor = [int]$matches[2]; $patch = [int]$matches[3]
-            $betaSuffix = $matches[4]
-          } else {
-            $major = 0; $minor = 1; $patch = 0; $betaSuffix = $null
-          }
-
-          switch ($bump) {
-            "beta" {
-              if ($betaSuffix -match 'b(\d+)') {
-                $betaNum = [int]$matches[1] + 1
-                $newVersion = "$major.$minor.$patch" + "b$betaNum"
-              } else {
-                # First beta: bump patch then add b1
-                $patch++
-                $newVersion = "$major.$minor.$patch" + "b1"
-              }
+            if ($latest -match '^(\d+\.\d+\.\d+)b(\d+)$') {
+              # Latest is beta — increment beta number
+              $newVersion = "$($matches[1])b$([int]$matches[2] + 1)"
+            } elseif ($latest -match '^(\d+\.\d+\.\d+)$') {
+              # Latest is release — bump patch and add b1
+              $parts = $matches[1].Split('.')
+              $newVersion = "$($parts[0]).$($parts[1]).$([int]$parts[2] + 1)b1"
+            } else {
+              # No published version — fallback to file-based
+              $content = Get-Content src/pustaka/__init__.py -Raw
+              $content -match '__version__ = "([^"]+)"' | Out-Null
+              $current = if ($matches) { $matches[1] } else { "0.1.0" }
+              $current -match '^(\d+)\.(\d+)\.(\d+)' | Out-Null
+              $newVersion = "$($matches[1]).$($matches[2]).$([int]$matches[3] + 1)b1"
             }
-            "patch" { $newVersion = "$major.$minor.$($patch+1)" }
-            "feat"  { $newVersion = "$($minor+1).0.0" }
-            "major" { $newVersion = "$($major+1).0.0" }
+          } else {
+            # patch/feat/major: read file version
+            $content = Get-Content src/pustaka/__init__.py -Raw
+            $content -match '__version__ = "([^"]+)"' | Out-Null
+            $current = if ($matches) { $matches[1] } else { "0.1.0" }
+            $current -match '^(\d+)\.(\d+)\.(\d+)' | Out-Null
+            $major = [int]$matches[1]; $minor = [int]$matches[2]; $patch = [int]$matches[3]
+            switch ($bump) {
+              "patch" { $newVersion = "$major.$minor.$($patch+1)" }
+              "feat"  { $newVersion = "$($minor+1).0.0" }
+              "major" { $newVersion = "$($major+1).0.0" }
+            }
           }
 
           Write-Host "New: $newVersion"
