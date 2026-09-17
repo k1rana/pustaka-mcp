@@ -10,7 +10,7 @@ authors = [
     { name = "contributor" },
 ]
 dependencies = [
-    "mcp>=1.0.0",
+    "mcp>=2.0.0,<3",
     "requests>=2.28.0",
     "beautifulsoup4>=4.11.0",
     "lxml>=4.9.0",
@@ -27,8 +27,8 @@ Source = "https://github.com/yingtze/pencari-skripsi-indonesia"
 [project.scripts]
 pustaka = "pustaka.server:main"
 
-[tool.uv]
-dev-dependencies = ["pytest>=7.0"]
+[dependency-groups]
+dev = ["pytest>=7.0"]
 
 [build-system]
 requires = ["hatchling"]

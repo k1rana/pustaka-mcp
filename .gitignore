@@ -2,9 +2,9 @@
 .cache_skripsi/
 
 # ── Output hasil pencarian ───────────────────────────────────────────
-skripsi_*.csv
-skripsi_*.json
-skripsi_*.xlsx
+pustaka_*.csv
+pustaka_*.json
+pustaka_*.xlsx
 hasil_*.csv
 hasil_*.json
 hasil_*.xlsx

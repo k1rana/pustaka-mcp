@@ -18,7 +18,7 @@ import logging
 import sys
 from typing import Any
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
 
 from . import __version__
 from .engine import ThesisSearcher, PDFMINER_AVAILABLE
@@ -26,7 +26,7 @@ from .engine import ThesisSearcher, PDFMINER_AVAILABLE
 logging.basicConfig(level=logging.WARNING, stream=sys.stderr, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 log = logging.getLogger("pustaka")
 
-mcp = FastMCP(
+mcp = MCPServer(
     "pustaka",
     instructions="""\
 Search thesis full text from 75+ Indonesian university repositories.
@@ -47,9 +47,9 @@ def _get_searcher() -> ThesisSearcher:
     if _searcher is None:
         import os
         _searcher = ThesisSearcher(
-            delay=float(os.environ.get("SKRIPSI_DELAY", "1.2")),
-            use_cache=os.environ.get("SKRIPSI_NO_CACHE", "").lower() not in ("1", "true"),
-            max_workers=int(os.environ.get("SKRIPSI_WORKERS", "5")),
+            delay=float(os.environ.get("PUSTAKA_DELAY", "1.2")),
+            use_cache=os.environ.get("PUSTAKA_NO_CACHE", "").lower() not in ("1", "true"),
+            max_workers=int(os.environ.get("PUSTAKA_WORKERS", "5")),
         )
     return _searcher
 
