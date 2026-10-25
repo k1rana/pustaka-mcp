@@ -11,11 +11,9 @@
 
 </div>
 
-**Pustaka** is an MCP server that searches thesis repositories across 75+ Indonesian universities (PTN, PTS, Polytechnics) using OAI-PMH harvesting and HTML scraping. It detects which theses are full text by analyzing PDF content directly.
+Pustaka is an MCP server that searches thesis repositories at 75+ Indonesian universities (PTN, PTS, polytechnics). It uses OAI-PMH harvesting and HTML scraping, and reads the PDF content to work out which theses are available in full text.
 
-Port of [pencari-skripsi-indonesia](https://github.com/yingtze/pencari-skripsi-indonesia) (MIT) by Yingtze.
-
-## Quick Start
+## Quick start
 
 ```bash
 pip install "pustaka-mcp[pdf]"
@@ -47,15 +45,15 @@ uvx --from pustaka-mcp pustaka.exe
 |------|-------------|
 | `search_thesis` | Search by keyword, filter by university/type/province. Returns full/partial/locked status. |
 | `list_universities` | List all supported universities, filter by type (PTN/PTS) or province. |
-| `analyze_pdf` | Deep PDF content analysis. Detects chapters, estimates page count, checks access. |
+| `analyze_pdf` | Analyzes PDF content. Detects chapters, estimates page count, checks access. |
 | `search_and_analyze` | Combined search and PDF analysis in one call. Slower but returns accurate status immediately. |
 
 ### Resources
 
-- `skripsi://universities` - all universities as JSON
-- `skripsi://stats` - repository statistics
+- `skripsi://universities`: all universities as JSON
+- `skripsi://stats`: repository statistics
 
-## Status Meanings
+## Status meanings
 
 | Status | Meaning |
 |--------|---------|
@@ -64,7 +62,7 @@ uvx --from pustaka-mcp pustaka.exe
 | **LOCKED** | PDF exists but requires login or embargo |
 | **UNKNOWN** | Cannot determine automatically |
 
-## Environment Variables
+## Environment variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -83,12 +81,10 @@ pip install pustaka-mcp[pdf]
 
 Without `pdfminer.six`, the server still works but uses HTML-only detection.
 
-## Original Work
+## Original work
 
-Port of [pencari-skripsi-indonesia](https://github.com/yingtze/pencari-skripsi-indonesia) by Yingtze, released under MIT License. The original provides the repository configurations, OAI-PMH harvesting logic, HTML parsers, and PDF analysis heuristics.
+Pustaka is a port of Yingtze's [pencari-skripsi-indonesia](https://github.com/yingtze/pencari-skripsi-indonesia), which is MIT licensed. The repository configurations, OAI-PMH harvesting, HTML parsers, and PDF analysis heuristics come from that project.
 
 ## License
 
-**AGPL-3.0-only** - This port. See [LICENSE](LICENSE).
-
-The original [pencari-skripsi-indonesia](https://github.com/yingtze/pencari-skripsi-indonesia) is MIT licensed.
+This port is AGPL-3.0-only. See [LICENSE](LICENSE).
