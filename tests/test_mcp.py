@@ -141,6 +141,23 @@ class TestEngine:
         assert "universitas" in config
         assert len(config["universitas"]) > 0
 
+    def test_load_config_via_importlib_resources(self):
+        """repositories.json must be discoverable from the installed package.
+
+        Guards against the uvx failure where the bundled data file was missing
+        or only looked up relative to the source tree.
+        """
+        from importlib.resources import files
+        res = files("pustaka").joinpath("repositories.json")
+        assert res.is_file(), "repositories.json is not bundled in the pustaka package"
+
+    def test_load_config_missing_raises_actionable(self, monkeypatch):
+        """When nothing is found, the error must name the override env var."""
+        from pustaka import engine
+        monkeypatch.setattr(engine, "_config_candidates", list)
+        with pytest.raises(FileNotFoundError, match="PUSTAKA_CONFIG"):
+            load_config()
+
     def test_extract_year(self):
         assert _extract_year("Thesis 2023") == "2023"
         assert _extract_year("no year") == ""

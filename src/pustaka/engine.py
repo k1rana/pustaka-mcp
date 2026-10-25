@@ -5,7 +5,9 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import os
 import re
+import tempfile
 import time
 import xml.etree.ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -26,16 +28,51 @@ log = logging.getLogger(__name__)
 
 _PACKAGE_DIR = Path(__file__).resolve().parent
 REPO_CONFIG = _PACKAGE_DIR / "repositories.json"
-CACHE_DIR = _PACKAGE_DIR / ".cache_skripsi"
-CACHE_DIR.mkdir(exist_ok=True)
 
 
-def load_config(path: Path = REPO_CONFIG) -> dict:
-    if not path.exists():
-        alt = Path.cwd() / "repositories.json"
-        if alt.exists(): path = alt
-        else: raise FileNotFoundError(f"repositories.json not found at {REPO_CONFIG} or {alt}")
-    with open(path, "r", encoding="utf-8") as f: return json.load(f)
+def _config_candidates() -> list[Path]:
+    """Locations to search for repositories.json, most specific first."""
+    out: list[Path] = []
+    override = os.environ.get("PUSTAKA_CONFIG")
+    if override: out.append(Path(override).expanduser())
+    try:
+        # Works for wheel/sdist installs regardless of where the package lands.
+        from importlib.resources import files as _files
+        res = _files("pustaka").joinpath("repositories.json")
+        if res.is_file(): out.append(Path(str(res)))
+    except Exception:
+        pass
+    out.append(REPO_CONFIG)
+    out.append(Path.cwd() / "repositories.json")
+    return out
+
+
+def load_config(path: Optional[Path] = None) -> dict:
+    candidates = ([Path(path)] if path is not None else []) + _config_candidates()
+    for candidate in candidates:
+        if candidate.is_file():
+            with open(candidate, "r", encoding="utf-8") as f: return json.load(f)
+    tried = ", ".join(dict.fromkeys(str(c) for c in candidates))
+    raise FileNotFoundError(
+        "repositories.json not found. Set PUSTAKA_CONFIG or install a build that "
+        f"bundles it. Looked in: {tried}"
+    )
+
+
+def _resolve_cache_dir() -> Path:
+    override = os.environ.get("PUSTAKA_CACHE_DIR")
+    candidates = ([Path(override).expanduser()] if override else [])
+    candidates += [_PACKAGE_DIR / ".cache_skripsi", Path(tempfile.gettempdir()) / "pustaka-cache"]
+    for candidate in candidates:
+        try:
+            candidate.mkdir(parents=True, exist_ok=True)
+            return candidate
+        except Exception:
+            continue
+    return candidates[-1]
+
+
+CACHE_DIR = _resolve_cache_dir()
 
 
 def create_session() -> requests.Session:

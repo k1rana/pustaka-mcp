@@ -7,7 +7,7 @@ license = { text = "AGPL-3.0-only" }
 requires-python = ">=3.10"
 authors = [
     { name = "Yingtze", email = "yingtze@users.noreply.github.com" },
-    { name = "k1rana". email = "nyannss@proton.me"}
+    { name = "k1rana", email = "nyannss@proton.me" }
 ]
 dependencies = [
     "mcp>=2.0.0,<3",
